@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Trắc nghiệm Toán 6 – 50/100 câu • 90 phút</title>
+    <meta name="description" content="50 câu ngẫu nhiên từ bộ 100 câu Toán 6 (KNTT Bài 1–15). Thời gian 90 phút, tự chấm điểm.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- React 18 UMD + Babel for inline JSX -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  </head>
+  <body class="bg-gray-50 text-gray-900">
+    <div id="root"></div>
+
+    <script type="text/babel">
+      const { useMemo, useState, useEffect } = React;
+
+      const EXAM_SIZE = 50;               // số câu trong đề
+      const EXAM_DURATION_SEC = 90 * 60;  // 90 phút
+
+      // ====== DATA (100 câu gốc) ======
+      const BANK = [
+        { id: 1, q: "Số nhỏ nhất có 4 chữ số và chia hết cho 9 là", choices: ["1002","1008","1017","1026"], answer: 1 },
+        { id: 2, q: "Chọn giá trị lớn nhất", choices: ["2^6","3^4","5^3","4^4"], answer: 3 },
+        { id: 3, q: "120 − [15 × (6 − 2)] =", choices: ["45","60","120","180"], answer: 1 },
+        { id: 4, q: "Số nhỏ nhất chia hết cho 15 và 28 là", choices: ["210","420","840","1260"], answer: 1 },
+        { id: 5, q: "Trong các số: 3456; 4563; 6345; 5346 – số chia hết cho 36 là", choices: ["3456","4563","6345","5346"], answer: 0 },
+        { id: 6, q: "Phân tích 84 ra thừa số nguyên tố đúng là", choices: ["2^2·3·7","2·3^2·7","2^3·3·7","2^2·3^2·7"], answer: 0 },
+        { id: 7, q: "|−18| − |−5| =", choices: ["−13","13","−23","23"], answer: 1 },
+        { id: 8, q: "10^2 − (3^2 + 4^2) =", choices: ["7","25","50","75"], answer: 3 },
+        { id: 9, q: "Số N = 3a7 chia hết cho 9. Chữ số a bằng", choices: ["0","2","5","8"], answer: 3 },
+        { id: 10, q: "Số 74x8 chia hết cho 9. x bằng", choices: ["0","2","5","8"], answer: 3 },
+        { id: 11, q: "ƯCLN(36, 60) bằng", choices: ["6","12","18","24"], answer: 1 },
+        { id: 12, q: "BCNN(24, 36, 90) bằng", choices: ["180","360","720","1080"], answer: 1 },
+        { id: 13, q: "Tập A = {x ∈ N | x < 10, x nguyên tố}. Số phần tử của A là", choices: ["2","4","5","6"], answer: 1 },
+        { id: 14, q: "Sắp xếp tăng dần đúng", choices: ["5601 < 5106 < 5160 < 5016","5016 < 5106 < 5160 < 5601","5106 < 5016 < 5601 < 5160","5016 < 5160 < 5106 < 5601"], answer: 1 },
+        { id: 15, q: "Tính nhanh 125 × 48", choices: ["5 000","6 000","5 500","4 800"], answer: 1 },
+        { id: 16, q: "(80 − 5^2) ÷ 5 =", choices: ["9","11","13","15"], answer: 1 },
+        { id: 17, q: "Trong số 607 540, chữ số 6 có giá trị", choices: ["6","600","600 000","6 000"], answer: 2 },
+        { id: 18, q: "Số 2b5 chia hết cho 9. b =", choices: ["1","2","4","7"], answer: 1 },
+        { id: 19, q: "Số nguyên tố trong các số: 91; 97; 121; 143 là", choices: ["91","97","121","143"], answer: 1 },
+        { id: 20, q: "(6 + 4) × (9 − 7) =", choices: ["10","20","40","60"], answer: 1 },
+        { id: 21, q: "Giá trị 2^3 · 2^4 bằng", choices: ["2^7","2^{12}","2^1","14"], answer: 0 },
+        { id: 22, q: "(10^2)^3 =", choices: ["10^5","10^6","10^8","10^9"], answer: 1 },
+        { id: 23, q: "Số lớn nhất nhỏ hơn 30 và là bội của 3 là", choices: ["27","28","29","30"], answer: 0 },
+        { id: 24, q: "Số ba chữ số chia hết cho 25 là", choices: ["375","382","493","567"], answer: 0 },
+        { id: 25, q: "Điều kiện để x chia hết cho 6", choices: ["x chẵn","x chia hết cho 3","x chia hết cho 2 và 3","x chia hết cho 9"], answer: 2 },
+        { id: 26, q: "|−15| + |0| − |7| =", choices: ["−8","8","−22","22"], answer: 1 },
+        { id: 27, q: "Phát biểu đúng về tập rỗng", choices: ["Có 1 phần tử 0","Không có phần tử nào","Có vô hạn phần tử","Có hai phần tử 0 và 1"], answer: 1 },
+        { id: 28, q: "Tìm x: x + 3 209 = 10 000", choices: ["6 781","6 791","7 781","7 791"], answer: 1 },
+        { id: 29, q: "Tìm y: 25 000 − y = 9 876", choices: ["14 876","15 124","34 876","35 124"], answer: 1 },
+        { id: 30, q: "18 × (50 + 2) =", choices: ["936","900","864","804"], answer: 0 },
+        { id: 31, q: "[−5 − (−9)] − [−3 − (−4)] =", choices: ["3","4","5","6"], answer: 0 },
+        { id: 32, q: "Số 99 999 chia hết cho", choices: ["3","9","11","A và B đúng"], answer: 3 },
+        { id: 33, q: "Trong các phát biểu, đúng là", choices: ["1 là số nguyên tố","Mọi số chẵn đều chia hết cho 4","Mọi bội của 10 đều chia hết cho 2 và 5","Mọi số chia hết cho 9 đều chia hết cho 6"], answer: 2 },
+        { id: 34, q: "x nhỏ nhất sao cho 72x chia hết cho 18", choices: ["1","2","3","4"], answer: 0 },
+        { id: 35, q: "BCNN(15, 28) =", choices: ["210","280","420","840"], answer: 2 },
+        { id: 36, q: "Chọn số LỚN NHẤT trong danh sách mà 1008 chia hết: 7; 8; 9; 11", choices: ["7","8","9","11"], answer: 2 },
+        { id: 37, q: "5^2 + 4^3 =", choices: ["41","57","81","89"], answer: 3 },
+        { id: 38, q: "Số đối của −7 là", choices: ["7","−7","0","−14"], answer: 0 },
+        { id: 39, q: "So sánh 2^6 và 3^4", choices: ["2^6 > 3^4","2^6 < 3^4","Bằng nhau","Không so sánh được"], answer: 1 },
+        { id: 40, q: "Điền để được đẳng thức đúng: a − [b − (−c)] =", choices: ["a − b + c","a − b − c","a + b − c","a + b + c"], answer: 1 },
+        { id: 41, q: "405 020 viết bằng lời đúng là", choices: ["Bốn trăm linh năm nghìn không trăm hai mươi","Bốn trăm lẻ năm nghìn không trăm hai mươi","Bốn trăm linh năm ngàn không trăm hai mươi","Bốn trăm năm nghìn lẻ hai mươi"], answer: 1 },
+        { id: 42, q: "Chọn x: 20 < x < 30 và x là bội của 3 và 4", choices: ["20","24","28","30"], answer: 1 },
+        { id: 43, q: "2 × (30 − 4 × 5) + 10 =", choices: ["10","20","30","40"], answer: 2 },
+        { id: 44, q: "Trong các số sau, KHÔNG chia hết cho 4 là", choices: ["312","516","728","902"], answer: 3 },
+        { id: 45, q: "||−8| − |5|| =", choices: ["3","13","−3","−13"], answer: 0 },
+        { id: 46, q: "ƯCLN(72, 108, 90) =", choices: ["6","9","18","36"], answer: 2 },
+        { id: 47, q: "x lớn nhất chia hết cho 24 và 40 với x ≤ 200", choices: ["80","120","160","200"], answer: 1 },
+        { id: 48, q: "Các số nguyên nằm giữa −5 và 3 có bao nhiêu phần tử", choices: ["6","7","8","9"], answer: 1 },
+        { id: 49, q: "(−7) + 12 − (−5) =", choices: ["0","10","20","24"], answer: 1 },
+        { id: 50, q: "−(7 − 12) =", choices: ["−5","5","−19","19"], answer: 1 },
+        { id: 51, q: "Số 1 035 chia hết cho", choices: ["2","5","10","25"], answer: 1 },
+        { id: 52, q: "Tính nhanh: 125 + 375 + 500 =", choices: ["900","950","1 000","1 100"], answer: 2 },
+        { id: 53, q: "x nhỏ nhất sao cho x chia hết cho 9 và 5, x < 200", choices: ["45","90","135","180"], answer: 0 },
+        { id: 54, q: "Tổng các chữ số của 10 000 là", choices: ["1","4","5","10"], answer: 0 },
+        { id: 55, q: "Số có ba chữ số chia hết cho 8 là", choices: ["248","250","333","562"], answer: 0 },
+        { id: 56, q: "(3^3 + 4 × 7 − 2) =", choices: ["27","53","49","51"], answer: 1 },
+        { id: 57, q: "Số nguyên tố nhỏ hơn 30 có bao nhiêu số", choices: ["8","9","10","11"], answer: 2 },
+        { id: 58, q: "Tập chữ cái khác nhau của “VIETNAM” có số phần tử là", choices: ["4","5","6","7"], answer: 3 },
+        { id: 59, q: "Số 1 001 chia hết cho", choices: ["7","11","13","A, B, C đều đúng"], answer: 3 },
+        { id: 60, q: "x thỏa −3 < x ≤ 2 có bao nhiêu giá trị nguyên", choices: ["4","5","6","7"], answer: 1 },
+        { id: 61, q: "Bỏ ngoặc: −(a − b + c) =", choices: ["−a − b + c","−a + b − c","−a + b + c","−a − b − c"], answer: 1 },
+        { id: 62, q: "Chữ số hàng chục của số 3·10^4 + 5·10^2 + 8·10 + 6 là", choices: ["8","6","5","3"], answer: 0 },
+        { id: 63, q: "(3 456 + 2 544) − 1 000 =", choices: ["5 000","5 500","4 900","4 800"], answer: 0 },
+        { id: 64, q: "7y = 4 997. Thương và dư của 4 997 ÷ 7 là", choices: ["713 dư 6","714 dư 1","713 dư 5","714 dư 3"], answer: 0 },
+        { id: 65, q: "36 × (25 + 75) =", choices: ["1 800","3 600","2 700","3 000"], answer: 1 },
+        { id: 66, q: "Số 90 100 so với 9·10^4 + 100", choices: ["<",">","=","Không xác định"], answer: 2 },
+        { id: 67, q: "Trên tia số, số gần 0 hơn", choices: ["999","1 001","bằng nhau","Không xác định"], answer: 0 },
+        { id: 68, q: "Nhà máy sản xuất 2 350 sp/ngày. 12 ngày sản xuất được", choices: ["27 000","28 200","23 500","24 600"], answer: 1 },
+        { id: 69, q: "Tìm x: x × 45 = 9 900", choices: ["210","220","230","240"], answer: 1 },
+        { id: 70, q: "4^4 − 5^3 =", choices: ["131","256","−131","125"], answer: 0 },
+        { id: 71, q: "(6 − 2) × (9 − 7) × 5 =", choices: ["20","40","50","60"], answer: 1 },
+        { id: 72, q: "Tổng chữ số của số chia hết cho 9 nhỏ nhất có 4 chữ số là", choices: ["8","9","10","18"], answer: 1 },
+        { id: 73, q: "Số nào KHÔNG phải bội của 3", choices: ["4 563","6 345","5 346","3 457"], answer: 3 },
+        { id: 74, q: "Nếu a | b thì ƯCLN(a, b) =", choices: ["a","b","1","ab"], answer: 0 },
+        { id: 75, q: "Cắt 84 cm, 126 cm, 210 cm thành đoạn bằng nhau dài nhất. Mỗi đoạn dài", choices: ["14 cm","21 cm","28 cm","42 cm"], answer: 3 },
+        { id: 76, q: "Số nhỏ nhất chia hết cho 15 và 28 đồng thời < 500 là", choices: ["420","210","280","315"], answer: 0 },
+        { id: 77, q: "Chọn đúng", choices: ["10^3 = 100","10^3 = 1000","10^3 = 10 000","10^3 = 10"], answer: 1 },
+        { id: 78, q: "(80 − 25) ÷ 5 + 2^3 =", choices: ["15","17","19","21"], answer: 2 },
+        { id: 79, q: "Số 2 chữ số lớn nhất chia hết cho 4 và 5", choices: ["80","90","95","100"], answer: 0 },
+        { id: 80, q: "(a + b) + c = a + (b + c) luôn đúng với", choices: ["Cộng số tự nhiên","Trừ số tự nhiên","Chia số tự nhiên","Cả B và C"], answer: 0 },
+        { id: 81, q: "x có ba chữ số, hàng chục là 7. Số nào chia hết cho 3?", choices: ["472","571","683","774"], answer: 3 },
+        { id: 82, q: "x nhỏ nhất > 200 chia hết cho 9 và 4", choices: ["204","216","228","252"], answer: 1 },
+        { id: 83, q: "Tổng các số nguyên từ −1 đến −10", choices: ["−45","−55","−65","0"], answer: 1 },
+        { id: 84, q: "|−12| − |−9| + |−3| =", choices: ["0","6","12","18"], answer: 1 },
+        { id: 85, q: "Chọn số HỢP SỐ", choices: ["2","3","5","21"], answer: 3 },
+        { id: 86, q: "Phân tích 1 000", choices: ["2^3·5^3","2^4·5^2","2^2·5^4","2^5·5^3"], answer: 0 },
+        { id: 87, q: "Số KHÔNG chia hết cho 25", choices: ["225","350","475","560"], answer: 3 },
+        { id: 88, q: "Chọn số < 50 chia hết cho 3 và khi chia 5 dư 2", choices: ["17","32","47","42"], answer: 3 },
+        { id: 89, q: "100 − 10 ÷ 2 × 5 bằng 75 nếu đặt ngoặc", choices: ["100 − (10 ÷ 2) × 5","(100 − 10) ÷ (2 × 5)","100 − 10 ÷ (2 × 5)","(100 − 10) ÷ 2 × 5"], answer: 0 },
+        { id: 90, q: "(10^2) − (3^2) − (4^2) =", choices: ["25","75","50","0"], answer: 1 },
+        { id: 91, q: "(−12) + 7 − 4 =", choices: ["−1","−9","−5","−3"], answer: 1 },
+        { id: 92, q: "Số 250 chia hết cho", choices: ["2, 5 và 10","2 và 5","5 và 10","chỉ 5"], answer: 0 },
+        { id: 93, q: "Trong các số 91; 121; 169; 221 – số KHÔNG nguyên tố là", choices: ["91","121","169","Tất cả"], answer: 3 },
+        { id: 94, q: "Hai đèn chớp: A mỗi 6s, B mỗi 8s. Sau bao lâu chớp cùng lúc?", choices: ["14s","24s","36s","48s"], answer: 1 },
+        { id: 95, q: "x có 3 chữ số, tổng chữ số 18 và x chia hết cho 9. Chọn đúng", choices: ["954","882","765","Tất cả đúng"], answer: 3 },
+        { id: 96, q: "(a − b) + (−c) =", choices: ["a − b + c","a − b − c","a + b − c","−a − b − c"], answer: 1 },
+        { id: 97, q: "504 × 25 =", choices: ["12 100","12 500","12 600","12 700"], answer: 2 },
+        { id: 98, q: "7 200 ÷ 90 =", choices: ["70","72","80","90"], answer: 2 },
+        { id: 99, q: "Chọn phát biểu đúng", choices: ["Số chia hết cho 9 chắc chắn chia hết cho 3","Số chia hết cho 6 chắc chắn chia hết cho 9","Số chia hết cho 8 chắc chắn chia hết cho 4","A và C đúng"], answer: 3 },
+        { id: 100, q: "10^3 − (2^5 + 3^4) =", choices: ["887","781","889","901"], answer: 0 },
+      ];
+
+      // ====== UTILS ======
+      function shuffle(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function pickExam(bank, size) {
+        const shuffled = shuffle(bank).slice(0, size);
+        return shuffled.map((q) => {
+          const idxs = q.choices.map((_, i) => i);
+          const order = shuffle(idxs);
+          const choices = order.map((i) => q.choices[i]);
+          const answer = order.indexOf(q.answer);
+          return { ...q, choices, answer };
+        });
+      }
+
+      function formatTime(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        const s = sec % 60;
+        const hh = h.toString().padStart(2, "0");
+        const mm = m.toString().padStart(2, "0");
+        const ss = s.toString().padStart(2, "0");
+        return \`\${hh}:\${mm}:\${ss}\`;
+      }
+
+      // ====== COMPONENTS ======
+      function QuestionCard({ q, index, chosen, onChoose, showAnswer, locked }) {
+        return (
+          <div className="bg-white border rounded-2xl shadow-sm p-4">
+            <div className="mb-3">
+              <div className="text-sm text-gray-500">Câu {index + 1}</div>
+              <div className="text-base sm:text-lg font-medium leading-relaxed">{q.q}</div>
+            </div>
+            <div className="space-y-2">
+              {q.choices.map((c, i) => {
+                const isCorrect = i === q.answer;
+                const isChosen = chosen === i;
+                const showState = showAnswer || isChosen;
+                let cls = "border-gray-200";
+                if (showState) {
+                  if (isCorrect) cls = "border-green-500 bg-green-50";
+                  else if (isChosen && !isCorrect) cls = "border-red-400 bg-red-50";
+                }
+                return (
+                  <label key={i} className={\`flex items-center gap-3 p-2 border rounded-xl cursor-pointer \${locked ? "opacity-60 cursor-not-allowed" : ""} \${cls}\`}>
+                    <input
+                      type="radio"
+                      name={\`q-\${q.id}\`}
+                      className="accent-indigo-600"
+                      checked={isChosen || false}
+                      onChange={() => !locked && onChoose(i)}
+                      disabled={locked}
+                    />
+                    <span className="select-none">{String.fromCharCode(65 + i)}. {c}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+        );
+      }
+
+      function App() {
+        const [seed, setSeed] = useState(0);
+        const [showAnswers, setShowAnswers] = useState(false);
+        const [current, setCurrent] = useState(0);
+        const [responses, setResponses] = useState(Array(EXAM_SIZE).fill(null));
+        const [remain, setRemain] = useState(EXAM_DURATION_SEC);
+        const [submitted, setSubmitted] = useState(false);
+
+        const questions = useMemo(() => pickExam(BANK, EXAM_SIZE), [seed]);
+        const TOTAL = questions.length;
+
+        useEffect(() => {
+          if (submitted) return;
+          if (remain <= 0) {
+            // auto submit
+            setSubmitted(true);
+            setShowAnswers(true);
+            return;
+          }
+          const t = setTimeout(() => setRemain(remain - 1), 1000);
+          return () => clearTimeout(t);
+        }, [remain, submitted]);
+
+        function pick(iChoice) {
+          if (submitted) return;
+          setResponses((prev) => {
+            const next = prev.slice();
+            next[current] = iChoice;
+            return next;
+          });
+        }
+
+        function resetAll() {
+          setSeed((s) => s + 1);
+          setResponses(Array(EXAM_SIZE).fill(null));
+          setCurrent(0);
+          setShowAnswers(false);
+          setSubmitted(false);
+          setRemain(EXAM_DURATION_SEC);
+        }
+
+        function submitNow() {
+          setSubmitted(true);
+          setShowAnswers(true);
+        }
+
+        const doneCount = responses.filter((v) => v !== null).length;
+        const correctCount = responses.reduce((acc, r, i) => {
+          if (r === null) return acc;
+          return acc + (r === questions[i].answer ? 1 : 0);
+        }, 0);
+        const percent = Math.round((correctCount / TOTAL) * 100);
+
+        return (
+          <div className="min-h-screen bg-gray-50 text-gray-900 p-4 sm:p-6">
+            <div className="max-w-5xl mx-auto">
+              <header className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold">Trắc nghiệm Toán 6 – 50/100 câu (90 phút)</h1>
+                  <p className="text-sm text-gray-600">Ngẫu nhiên 50 câu từ bộ 100 • Trộn đáp án • Tự chấm điểm • Hết giờ tự nộp</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="px-3 py-2 rounded-xl border bg-white shadow-sm font-mono">
+                    ⏳ {formatTime(remain)} {submitted && <span className="text-red-600 font-semibold">(Hết giờ/Đã nộp)</span>}
+                  </div>
+                  <button onClick={resetAll} className="px-3 py-2 rounded-xl bg-white border shadow-sm hover:bg-gray-100">Trộn lại đề</button>
+                  <button onClick={submitNow} disabled={submitted} className="px-3 py-2 rounded-xl bg-indigo-600 text-white shadow hover:bg-indigo-700 disabled:opacity-50">Nộp bài</button>
+                  <button onClick={() => setShowAnswers((v) => !v)} className="px-3 py-2 rounded-xl bg-white border shadow-sm hover:bg-gray-100">{showAnswers ? "Ẩn đáp án" : "Hiện đáp án"}</button>
+                </div>
+              </header>
+
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <div className="px-3 py-1 rounded-full bg-white border shadow-sm">
+                  Câu {current + 1}/{TOTAL}
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white border shadow-sm">
+                  Đã làm: {doneCount}/{TOTAL}
+                </div>
+                <div className="px-3 py-1 rounded-full bg-white border shadow-sm">
+                  Đúng: {correctCount} ({percent}%)
+                </div>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-green-500" style={{ width: \`\${(doneCount / TOTAL) * 100}%\` }} />
+                </div>
+              </div>
+
+              <QuestionCard
+                q={questions[current]}
+                index={current}
+                chosen={responses[current]}
+                onChoose={pick}
+                showAnswer={showAnswers}
+                locked={submitted}
+              />
+
+              <nav className="mt-4 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setCurrent((i) => Math.max(0, i - 1))}
+                  className="px-4 py-2 rounded-xl bg-white border shadow-sm hover:bg-gray-100 disabled:opacity-50"
+                  disabled={current === 0}
+                >
+                  ← Trước
+                </button>
+                <button
+                  onClick={() => setCurrent((i) => Math.min(TOTAL - 1, i + 1))}
+                  className="px-4 py-2 rounded-xl bg-white border shadow-sm hover:bg-gray-100 disabled:opacity-50"
+                  disabled={current === TOTAL - 1}
+                >
+                  Sau →
+                </button>
+                <button
+                  onClick={() => {
+                    const next = responses.findIndex((v, i) => v === null && i >= current);
+                    if (next !== -1) setCurrent(next);
+                  }}
+                  className="ml-auto px-4 py-2 rounded-xl bg-indigo-600 text-white shadow hover:bg-indigo-700"
+                  disabled={submitted}
+                >
+                  Nhảy tới câu bỏ trống
+                </button>
+              </nav>
+
+              <div className="mt-4 grid grid-cols-10 sm:grid-cols-20 gap-1">
+                {Array.from({ length: TOTAL }).map((_, i) => {
+                  const isCurrent = i === current;
+                  const done = responses[i] !== null;
+                  const correct = done && responses[i] === questions[i].answer;
+                  const base = "h-8 text-xs rounded-md border flex items-center justify-center";
+                  let cls = "bg-white border-gray-200";
+                  if (isCurrent) cls = "border-indigo-600 bg-indigo-50";
+                  if (submitted) {
+                    if (responses[i] === null) cls = "bg-yellow-50 border-yellow-400";
+                    else if (correct) cls = "bg-green-50 border-green-500";
+                    else cls = "bg-red-50 border-red-400";
+                  } else if (done) {
+                    cls = correct ? "border-green-500" : "border-red-400";
+                  }
+                  return (
+                    <button
+                      key={i}
+                      title={\`Câu \${i + 1}\`}
+                      onClick={() => setCurrent(i)}
+                      className={\`\${base} \${cls}\`}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-6 p-4 bg-white border rounded-2xl shadow-sm">
+                <h2 className="font-semibold mb-2">Kết quả</h2>
+                <p>
+                  Điểm: <span className="font-bold">{correctCount}/{TOTAL}</span>
+                  {" "}(<span className="font-bold">{percent}%</span>){submitted ? "" : " • (Hãy nộp bài để chốt điểm)"}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  Lưu ý: Sau khi hết 90 phút, hệ thống tự nộp và khoá lựa chọn.
+                </p>
+              </div>
+
+              <footer className="mt-6 text-xs text-gray-500">
+                <p>Chủ đề: Tập hợp • Số tự nhiên • Thứ tự • Cộng/Trừ/Nhân/Chia • Lũy thừa • Thứ tự phép tính • Chia hết & dấu hiệu • Nguyên tố • ƯCLN/BCNN • Số nguyên & quy tắc dấu ngoặc.</p>
+              </footer>
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
